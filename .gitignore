@@ -1,0 +1,27 @@
+# Logs
+logs/*.log
+logs/
+
+# Backups (podem conter dados sensíveis)
+backups/*.bak
+backups/
+
+# Configurações locais
+config/authorized_sudo_users.txt
+config/secforge.conf
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
