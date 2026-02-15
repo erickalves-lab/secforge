@@ -172,8 +172,12 @@ Módulos aplicados:
   1. SSH Hardening         - Desabilitar root, timeout, IP whitelist
   2. Firewall UFW          - Configurar firewall
   3. Password Policy       - Senhas fortes obrigatórias
+  4. Disable Services      - Desabilitar serviços inseguros
+  5. Remove Packages       - Remover pacotes desnecessários
+  6. Auto Updates          - Atualizações automáticas de segurança
+  7. Flood Protection      - Proteção contra SYN flood e spoofing
 
-Para mais informações: https://github.com/SEU_USUARIO/secforge
+Para mais informações: https://github.com/erickalves-lab/secforge
 EOF
 }
 
@@ -247,6 +251,22 @@ main() {
         source "${MODULES_DIR}/password_policy.sh"
     fi
     
+    if [ -f "${MODULES_DIR}/disable_services.sh" ]; then
+        source "${MODULES_DIR}/disable_services.sh"
+    fi
+    
+    if [ -f "${MODULES_DIR}/remove_packages.sh" ]; then
+        source "${MODULES_DIR}/remove_packages.sh"
+    fi
+    
+    if [ -f "${MODULES_DIR}/auto_updates.sh" ]; then
+        source "${MODULES_DIR}/auto_updates.sh"
+    fi
+    
+    if [ -f "${MODULES_DIR}/flood_protection.sh" ]; then
+        source "${MODULES_DIR}/flood_protection.sh"
+    fi
+    
     # Executar módulos
     if [ -f "${MODULES_DIR}/ssh_hardening.sh" ]; then
         ssh_hardening
@@ -258,6 +278,22 @@ main() {
     
     if [ -f "${MODULES_DIR}/password_policy.sh" ]; then
         password_policy
+    fi
+    
+    if [ -f "${MODULES_DIR}/disable_services.sh" ]; then
+        disable_services
+    fi
+    
+    if [ -f "${MODULES_DIR}/remove_packages.sh" ]; then
+        remove_packages
+    fi
+    
+    if [ -f "${MODULES_DIR}/auto_updates.sh" ]; then
+        auto_updates
+    fi
+    
+    if [ -f "${MODULES_DIR}/flood_protection.sh" ]; then
+        flood_protection
     fi
     
     echo ""
