@@ -8,7 +8,7 @@
 
 **SecForge** é uma ferramenta de hardening automatizado desenvolvida para aplicar configurações de segurança em servidores Linux de forma rápida, consistente e auditável.
 
-O projeto implementa boas práticas de segurança baseadas em padrões da indústria, reduzindo a superfície de ataque e fortalecendo a postura de segurança do sistema.
+O projeto implementa boas práticas de segurança baseadas em padrões da indústria (CIS Benchmarks, NIST), reduzindo a superfície de ataque e fortalecendo a postura de segurança do sistema.
 
 ### Desenvolvido para:
 - ✅ Administradores de sistemas
@@ -18,9 +18,9 @@ O projeto implementa boas práticas de segurança baseadas em padrões da indús
 
 ---
 
-## ⚡ Funcionalidades (v1.0)
+## ⚡ Funcionalidades (v2.0-beta)
 
-### **1. SSH Hardening**
+### **1. SSH Hardening** 🔑
 - ✅ Desabilitar login root via SSH
 - ✅ Timeout de sessão (5 minutos de inatividade)
 - ✅ Restringir SSH a IPs específicos (opcional)
@@ -28,21 +28,54 @@ O projeto implementa boas práticas de segurança baseadas em padrões da indús
 - ✅ Forçar protocolo SSH 2
 - ✅ Desabilitar X11 Forwarding
 
-### **2. Firewall UFW**
+### **2. Firewall UFW** 🛡️
 - ✅ Configurar políticas padrão (deny incoming, allow outgoing)
 - ✅ Permitir SSH com rate limiting (proteção brute-force)
 - ✅ Permitir HTTP/HTTPS (opcional)
 - ✅ Regras customizadas por IP
 
-### **3. Password Policy**
+### **3. Password Policy** 🔐
 - ✅ Senhas fortes obrigatórias:
   - Mínimo 12 caracteres
   - 1 letra maiúscula
   - 1 letra minúscula
   - 1 número
   - 1 caractere especial
+  - Máximo 3 caracteres repetidos
 - ✅ Impedir reutilização das últimas 5 senhas
-- ✅ Máximo 3 caracteres repetidos consecutivos
+- ✅ Validação via PAM
+
+### **4. Desabilitar Serviços** 🚫
+- ✅ Desabilita e mascara serviços inseguros:
+  - telnet, FTP (vsftpd, proftpd)
+  - rsh, rlogin, rexec
+  - NIS, TFTP, talk
+  - avahi-daemon (mDNS)
+  - CUPS (impressão)
+  - Bluetooth
+
+### **5. Remover Pacotes** 📦
+- ✅ Remove pacotes inseguros/desnecessários:
+  - telnet, rsh-client
+  - nis, tftp, talk
+  - xinetd
+- ✅ Limpeza automática de dependências órfãs
+
+### **6. Atualizações Automáticas** 🔄
+- ✅ Instala automaticamente atualizações de **segurança apenas**
+- ✅ Verificação diária
+- ✅ Download e instalação automáticos
+- ✅ Limpeza semanal de pacotes antigos
+- ✅ Logs detalhados em `/var/log/unattended-upgrades/`
+
+### **7. Proteção Flood** 🌊
+- ✅ **SYN Flood Protection**: SYN cookies habilitados
+- ✅ **Anti-Spoofing**: Reverse path filtering
+- ✅ **Anti-Smurf**: Ignora ICMP broadcasts
+- ✅ **Anti-MitM**: Desabilita ICMP redirects
+- ✅ **Anti-Source Routing**: Bloqueia roteamento controlado por atacante
+- ✅ **Log Martians**: Detecta pacotes suspeitos
+- ✅ Configurações de kernel via sysctl
 
 ---
 
@@ -100,7 +133,7 @@ sudo ./secforge.sh --verbose    # Modo detalhado
  |____/ \___|\___|_|  \___/|_|  \__, |\___|
                                 |___/      
     Automated Linux Security Hardening
-    Version: 1.0.0
+    Version: 2.0-beta
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    🧪 MODO DRY-RUN ATIVADO
@@ -111,17 +144,18 @@ sudo ./secforge.sh --verbose    # Modo detalhado
 [DRY-RUN] Faria backup: /etc/ssh/sshd_config
 [DRY-RUN] Executaria: sed -i 's/^PermitRootLogin.*/PermitRootLogin no/'
 ...
-[OK] SSH Hardening aplicado com sucesso
 
-[INFO] === Módulo: Firewall UFW ===
-[DRY-RUN] Executaria: ufw default deny incoming
+[INFO] === Módulo: Flood Protection ===
+[DRY-RUN] Criaria: /etc/sysctl.d/99-secforge-network.conf
+🛡️  SYN Flood Protection
+🔒 Anti-Spoofing  
+🚫 Anti-DDoS Básico
 ...
-[OK] Firewall configurado com sucesso
 
-[INFO] === Módulo: Password Policy ===
-[DRY-RUN] Configuraria: /etc/security/pwquality.conf
-...
-[OK] Password Policy configurado com sucesso
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ℹ️  Simulação concluída
+   Nenhuma mudança foi aplicada
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
@@ -130,10 +164,14 @@ sudo ./secforge.sh --verbose    # Modo detalhado
 ```
 secforge/
 ├── secforge.sh              # Script principal
-├── modules/                 # Módulos de hardening
+├── modules/                 # Módulos de hardening (Bash)
 │   ├── ssh_hardening.sh
 │   ├── firewall.sh
-│   └── password_policy.sh
+│   ├── password_policy.sh
+│   ├── disable_services.sh
+│   ├── remove_packages.sh
+│   ├── auto_updates.sh
+│   └── flood_protection.sh
 ├── lib/
 │   └── common.sh           # Funções auxiliares
 ├── config/
@@ -150,23 +188,25 @@ secforge/
 ### Backups Automáticos
 Todos os arquivos modificados são automaticamente salvos em `backups/` com timestamp:
 ```
-backups/sshd_config.20260214_164312.bak
-backups/common-password.20260214_164312.bak
+backups/sshd_config.20260214_230113.bak
+backups/sysctl.conf.20260214_230113.bak
+backups/50unattended-upgrades.20260214_230113.bak
 ```
 
 ### Logs Detalhados
 Cada execução gera um log completo:
 ```
-logs/secforge_20260214_164312.log
+logs/secforge_20260214_230113.log
 ```
 
 ### Validação de Configurações
 - Testa configuração SSH antes de reiniciar
 - Valida regras de firewall
 - Verifica políticas de senha
+- Testa configurações de kernel
 
-### Rollback
-Em caso de erro, os backups permitem restauração manual:
+### Rollback Manual
+Em caso de erro, os backups permitem restauração:
 ```bash
 sudo cp backups/sshd_config.*.bak /etc/ssh/sshd_config
 sudo systemctl restart sshd
@@ -194,6 +234,7 @@ sudo systemctl restart sshd
 - ✅ Teste o SSH antes de desconectar
 - ✅ Verifique o firewall: `sudo ufw status`
 - ✅ Teste criar senha nova: `passwd`
+- ✅ Verifique proteções de kernel: `sysctl -a | grep syncookies`
 - ✅ Guarde os backups em local seguro
 
 ---
@@ -217,42 +258,86 @@ sudo ./secforge.sh --dry-run
 sudo ./secforge.sh
 
 # 6. Validar mudanças
-sudo sshd -t                    # Testar SSH
-sudo ufw status verbose         # Ver firewall
-passwd                          # Testar senha forte
+sudo sshd -t                              # Testar SSH
+sudo ufw status verbose                   # Ver firewall
+passwd                                     # Testar senha forte
+sysctl -a | grep syncookies               # Ver proteções kernel
+sudo systemctl status unattended-upgrades # Ver auto-updates
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
-### **Versão 1.0** ✅ (Atual)
+### **Versão 2.0-beta** ✅ (Atual)
 - ✅ SSH Hardening
 - ✅ Firewall UFW
 - ✅ Password Policy
+- ✅ Disable Services
+- ✅ Remove Packages
+- ✅ Auto Updates
+- ✅ Flood Protection
 
-### **Versão 2.0** (Planejado)
-- [ ] Desabilitar serviços desnecessários
-- [ ] Remover pacotes inseguros
-- [ ] Atualizações automáticas de segurança
-- [ ] Proteção contra SYN flood
-- [ ] Restrições de sudo
-- [ ] Proteção USB
-- [ ] Alerta de usuários inativos
+### **Versão 2.0** (Em desenvolvimento)
+- [ ] Sudo Restrictions (controlar privilégios)
+- [ ] Proteção USB (bloquear USB storage)
+- [ ] Alerta de usuários inativos (>15 dias)
 
 ### **Versão 3.0** (Futuro)
 - [ ] Perfis de hardening (minimal, standard, paranoid)
 - [ ] Sistema de rollback automático
 - [ ] CIS Benchmark compliance check
-- [ ] Relatórios em HTML/JSON
+- [ ] Relatórios em HTML/JSON (Python)
 - [ ] Auditd completo
+- [ ] Dashboard web (opcional)
+
+---
+
+## 🔬 Detalhes Técnicos
+
+### Proteção Flood - Como Funciona
+
+**SYN Cookies:**
+- Protege contra SYN flood sem alocar memória para conexões incompletas
+- Gera "cookie" criptográfico ao invés de manter estado
+- Valida cliente legítimo quando recebe ACK
+
+**Reverse Path Filtering:**
+- Valida se o IP de origem poderia realmente vir da interface de entrada
+- Previne IP spoofing e ataques de amplificação
+
+**Anti-Smurf:**
+- Ignora pings para broadcast
+- Previne participação em ataques de amplificação ICMP
+
+**Configurações aplicadas em:** `/etc/sysctl.d/99-secforge-network.conf`
+
+### Atualizações Automáticas
+
+**Como funciona:**
+- Sistema verifica diariamente por atualizações de segurança
+- Instala automaticamente apenas patches de segurança
+- **NÃO** reinicia automaticamente (requer ação manual)
+- Logs em: `/var/log/unattended-upgrades/`
+
+**Comandos úteis:**
+```bash
+# Ver atualizações pendentes
+apt list --upgradable
+
+# Forçar atualização agora
+sudo unattended-upgrade
+
+# Ver logs
+tail -f /var/log/unattended-upgrades/unattended-upgrades.log
+```
 
 ---
 
 ## 👨‍💻 Autor
 
-**Desenvolvido por:** [Seu Nome]  
-**LinkedIn:** [Seu LinkedIn]  
+**Desenvolvido por:** Erick Alves  
+**LinkedIn:** [linkedin.com/erick-alves-sec](https://linkedin.com/erick-alves-sec)  
 
 ### Contexto
 Este projeto foi desenvolvido como parte do meu portfólio de cibersegurança, demonstrando:
@@ -260,24 +345,14 @@ Este projeto foi desenvolvido como parte do meu portfólio de cibersegurança, d
 - Hardening de sistemas Linux
 - Boas práticas de segurança
 - Defesa proativa (Blue Team)
-- Conhecimento de SSH, firewall e políticas de senha
-
----
+- Conhecimento de SSH, firewall, políticas de senha e proteções de rede
+- Integração de múltiplas camadas de defesa
 
 ---
 
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-```
-MIT License
-
-Copyright (c) 2026 [Seu Nome]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
 
 ---
 
@@ -295,5 +370,3 @@ in the Software without restriction...
 - O autor não se responsabiliza por uso indevido
 
 ---
-
-**⭐ Se este projeto foi útil, considere dar uma estrela.**
