@@ -1,0 +1,10 @@
+# SecForge - Usuários Autorizados a ter Sudo
+# Um usuário por linha
+# Linhas começando com # são ignoradas
+
+# Exemplo de configuração:
+# admin
+# operador
+# seu_usuario
+
+# Adicione os usuários autorizados abaixo:

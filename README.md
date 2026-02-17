@@ -6,9 +6,9 @@
 
 ## 📋 Sobre o Projeto
 
-**SecForge** é uma ferramenta de hardening automatizado desenvolvida para aplicar configurações de segurança em servidores Linux de forma rápida, consistente e auditável.
+**SecForge** é uma ferramenta completa de hardening automatizado desenvolvida para aplicar configurações de segurança em servidores Linux de forma rápida, consistente e auditável.
 
-O projeto implementa boas práticas de segurança baseadas em padrões da indústria (CIS Benchmarks, NIST), reduzindo a superfície de ataque e fortalecendo a postura de segurança do sistema.
+O projeto implementa **10 módulos** de segurança baseados em padrões da indústria (CIS Benchmarks, NIST), reduzindo drasticamente a superfície de ataque e fortalecendo a postura de segurança do sistema.
 
 ### Desenvolvido para:
 - ✅ Administradores de sistemas
@@ -18,7 +18,7 @@ O projeto implementa boas práticas de segurança baseadas em padrões da indús
 
 ---
 
-## ⚡ Funcionalidades (v2.0-beta)
+## ⚡ Funcionalidades (v2.0)
 
 ### **1. SSH Hardening** 🔑
 - ✅ Desabilitar login root via SSH
@@ -77,6 +77,26 @@ O projeto implementa boas práticas de segurança baseadas em padrões da indús
 - ✅ **Log Martians**: Detecta pacotes suspeitos
 - ✅ Configurações de kernel via sysctl
 
+### **8. Proteção USB** 💾
+- ✅ Bloqueia dispositivos de armazenamento USB:
+  - Pendrives, HDs externos, SSDs USB
+- ✅ Mantém periféricos funcionando:
+  - Teclado, mouse, impressora, webcam
+- ✅ Proteção contra malware via USB
+- ✅ Prevenção de exfiltração de dados
+
+### **9. Restrições de Sudo** 👥
+- ✅ Controla quem tem privilégios sudo
+- ✅ Lista de usuários autorizados configurável
+- ✅ Remoção automática de usuários não autorizados
+- ✅ Relatório de mudanças aplicadas
+
+### **10. Alerta Usuários Inativos** ⏰
+- ✅ Detecta usuários sem login há mais de 15 dias
+- ✅ Identifica contas nunca utilizadas
+- ✅ Relatório visual com recomendações
+- ✅ Script Python integrado
+
 ---
 
 ## 🚀 Instalação
@@ -85,6 +105,7 @@ O projeto implementa boas práticas de segurança baseadas em padrões da indús
 - Ubuntu 20.04+ ou Debian 10+
 - Acesso root (sudo)
 - Bash 5.0+
+- Python 3.10+ (para módulo de usuários inativos)
 - Git instalado
 
 ### Passo a Passo
@@ -95,6 +116,7 @@ cd secforge
 
 # 2. Dar permissão de execução
 chmod +x secforge.sh
+chmod +x scripts/check_inactive_users.py
 
 # 3. Executar (recomendo testar em dry-run primeiro!)
 sudo ./secforge.sh --dry-run
@@ -133,7 +155,7 @@ sudo ./secforge.sh --verbose    # Modo detalhado
  |____/ \___|\___|_|  \___/|_|  \__, |\___|
                                 |___/      
     Automated Linux Security Hardening
-    Version: 2.0-beta
+    Version: 2.0.0
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    🧪 MODO DRY-RUN ATIVADO
@@ -145,11 +167,11 @@ sudo ./secforge.sh --verbose    # Modo detalhado
 [DRY-RUN] Executaria: sed -i 's/^PermitRootLogin.*/PermitRootLogin no/'
 ...
 
-[INFO] === Módulo: Flood Protection ===
-[DRY-RUN] Criaria: /etc/sysctl.d/99-secforge-network.conf
-🛡️  SYN Flood Protection
-🔒 Anti-Spoofing  
-🚫 Anti-DDoS Básico
+[INFO] === Módulo: Alerta de Usuários Inativos ===
+🔍 SecForge - Verificação de Usuários Inativos
+✅ Usuários ativos: 2
+⚠️  Inativos: 0
+⚪ Nunca logaram: 2
 ...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -171,13 +193,16 @@ secforge/
 │   ├── disable_services.sh
 │   ├── remove_packages.sh
 │   ├── auto_updates.sh
-│   └── flood_protection.sh
-├── lib/
-│   └── common.sh           # Funções auxiliares
+│   ├── flood_protection.sh
+│   ├── usb_protection.sh
+│   ├── sudo_restrictions.sh
+│   └── inactive_users.sh
+├── scripts/                 # Scripts Python
+│   └── check_inactive_users.py
 ├── config/
-│   └── secforge.conf       # Configurações
-├── logs/                   # Logs de execução
-├── backups/                # Backups automáticos
+│   └── authorized_sudo_users.txt.example
+├── logs/                    # Logs de execução
+├── backups/                 # Backups automáticos
 └── README.md
 ```
 
@@ -188,15 +213,15 @@ secforge/
 ### Backups Automáticos
 Todos os arquivos modificados são automaticamente salvos em `backups/` com timestamp:
 ```
-backups/sshd_config.20260214_230113.bak
-backups/sysctl.conf.20260214_230113.bak
-backups/50unattended-upgrades.20260214_230113.bak
+backups/sshd_config.20260216_223045.bak
+backups/sysctl.conf.20260216_223045.bak
+backups/50unattended-upgrades.20260216_223045.bak
 ```
 
 ### Logs Detalhados
 Cada execução gera um log completo:
 ```
-logs/secforge_20260214_230113.log
+logs/secforge_20260216_223045.log
 ```
 
 ### Validação de Configurações
@@ -229,12 +254,16 @@ sudo systemctl restart sshd
 
 4. **📝 Anote as mudanças aplicadas** - os logs ficam em `logs/`
 
+5. **👥 Configure usuários autorizados para sudo** em `config/authorized_sudo_users.txt` antes de executar
+
 ### **Após Executar:**
 
 - ✅ Teste o SSH antes de desconectar
 - ✅ Verifique o firewall: `sudo ufw status`
 - ✅ Teste criar senha nova: `passwd`
 - ✅ Verifique proteções de kernel: `sysctl -a | grep syncookies`
+- ✅ Teste USB: Plugar pendrive e verificar se não aparece
+- ✅ Execute análise de usuários: `sudo python3 scripts/check_inactive_users.py`
 - ✅ Guarde os backups em local seguro
 
 ---
@@ -263,13 +292,15 @@ sudo ufw status verbose                   # Ver firewall
 passwd                                     # Testar senha forte
 sysctl -a | grep syncookies               # Ver proteções kernel
 sudo systemctl status unattended-upgrades # Ver auto-updates
+lsmod | grep usb_storage                  # USB bloqueado (vazio)
+sudo python3 scripts/check_inactive_users.py # Usuários inativos
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
-### **Versão 2.0-beta** ✅ (Atual)
+### **Versão 2.0** ✅ (Atual)
 - ✅ SSH Hardening
 - ✅ Firewall UFW
 - ✅ Password Policy
@@ -277,19 +308,19 @@ sudo systemctl status unattended-upgrades # Ver auto-updates
 - ✅ Remove Packages
 - ✅ Auto Updates
 - ✅ Flood Protection
+- ✅ USB Protection
+- ✅ Sudo Restrictions
+- ✅ Inactive Users Alert
 
-### **Versão 2.0** (Em desenvolvimento)
-- [ ] Sudo Restrictions (controlar privilégios)
-- [ ] Proteção USB (bloquear USB storage)
-- [ ] Alerta de usuários inativos (>15 dias)
-
-### **Versão 3.0** (Futuro)
+### **Versão 3.0** (Planejado)
 - [ ] Perfis de hardening (minimal, standard, paranoid)
 - [ ] Sistema de rollback automático
 - [ ] CIS Benchmark compliance check
 - [ ] Relatórios em HTML/JSON (Python)
 - [ ] Auditd completo
-- [ ] Dashboard web (opcional)
+- [ ] Dashboard web
+- [ ] Modo interativo de seleção de módulos
+- [ ] Validação pós-hardening automatizada
 
 ---
 
@@ -311,6 +342,15 @@ sudo systemctl status unattended-upgrades # Ver auto-updates
 - Previne participação em ataques de amplificação ICMP
 
 **Configurações aplicadas em:** `/etc/sysctl.d/99-secforge-network.conf`
+
+### Proteção USB - Como Funciona
+
+**Blacklist de Módulo:**
+- Bloqueia módulo `usb-storage` do kernel
+- Sistema não reconhece dispositivos de armazenamento USB
+- Periféricos (teclado, mouse) continuam funcionando (usam módulos diferentes)
+
+**Configurações aplicadas em:** `/etc/modprobe.d/secforge-usb-block.conf`
 
 ### Atualizações Automáticas
 
@@ -337,16 +377,18 @@ tail -f /var/log/unattended-upgrades/unattended-upgrades.log
 ## 👨‍💻 Autor
 
 **Desenvolvido por:** Erick Alves  
-**LinkedIn:** [linkedin.com/erick-alves-sec](https://linkedin.com/erick-alves-sec)  
+**LinkedIn:** [linkedin.com/in/erick-alves-sec/](https://linkedin.com/in/erick-alves-sec)  
 
 ### Contexto
 Este projeto foi desenvolvido como parte do meu portfólio de cibersegurança, demonstrando:
-- Automação com Bash
-- Hardening de sistemas Linux
-- Boas práticas de segurança
+- Automação avançada com Bash e Python
+- Hardening completo de sistemas Linux
+- Boas práticas de segurança baseadas em CIS Benchmarks
 - Defesa proativa (Blue Team)
-- Conhecimento de SSH, firewall, políticas de senha e proteções de rede
-- Integração de múltiplas camadas de defesa
+- Conhecimento de SSH, firewall, PAM, sysctl e kernel hardening
+- Integração de múltiplas camadas de defesa em profundidade
+
+---
 
 ---
 
@@ -369,4 +411,3 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - Teste em ambiente de desenvolvimento antes de produção
 - O autor não se responsabiliza por uso indevido
 
----

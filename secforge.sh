@@ -17,7 +17,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # VARIÁVEIS GLOBAIS
 # ============================================================================
 
-VERSION="1.0.0"
+VERSION="2.0.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="${SCRIPT_DIR}/logs"
 BACKUP_DIR="${SCRIPT_DIR}/backups"
@@ -147,7 +147,7 @@ show_banner() {
  |____/ \___|\___|_|  \___/|_|  \__, |\___|
                                 |___/      
     Automated Linux Security Hardening
-    Version: 1.0.0
+    Version: 2.0.0
 EOF
     echo ""
 }
@@ -176,6 +176,9 @@ Módulos aplicados:
   5. Remove Packages       - Remover pacotes desnecessários
   6. Auto Updates          - Atualizações automáticas de segurança
   7. Flood Protection      - Proteção contra SYN flood e spoofing
+  8. USB Protection        - Bloqueio de USB storage
+  9. Sudo Restrictions     - Controlar quem tem privilégios sudo
+  10. Inactive Users       - Alertar sobre usuários inativos
 
 Para mais informações: https://github.com/erickalves-lab/secforge
 EOF
@@ -267,6 +270,18 @@ main() {
         source "${MODULES_DIR}/flood_protection.sh"
     fi
     
+    if [ -f "${MODULES_DIR}/usb_protection.sh" ]; then
+        source "${MODULES_DIR}/usb_protection.sh"
+    fi
+    
+    if [ -f "${MODULES_DIR}/sudo_restrictions.sh" ]; then
+        source "${MODULES_DIR}/sudo_restrictions.sh"
+    fi
+    
+    if [ -f "${MODULES_DIR}/inactive_users.sh" ]; then
+        source "${MODULES_DIR}/inactive_users.sh"
+    fi
+    
     # Executar módulos
     if [ -f "${MODULES_DIR}/ssh_hardening.sh" ]; then
         ssh_hardening
@@ -294,6 +309,18 @@ main() {
     
     if [ -f "${MODULES_DIR}/flood_protection.sh" ]; then
         flood_protection
+    fi
+    
+    if [ -f "${MODULES_DIR}/usb_protection.sh" ]; then
+        usb_protection
+    fi
+    
+    if [ -f "${MODULES_DIR}/sudo_restrictions.sh" ]; then
+        sudo_restrictions
+    fi
+    
+    if [ -f "${MODULES_DIR}/inactive_users.sh" ]; then
+        inactive_users_check
     fi
     
     echo ""
